@@ -85,7 +85,9 @@ describe("text pipeline", () => {
   it("runs guards before censoring", () => {
     const guard: TextGuard = {
       check: ({ text }) =>
-        text === "blocked" ? { allowed: false, reason: "blocked" } : { allowed: true },
+        text === "blocked"
+          ? { allowed: false, reason: "blocked" }
+          : { allowed: true },
     };
     const censor: TextCensor = {
       censor: () => "censored",
