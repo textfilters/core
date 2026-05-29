@@ -1,8 +1,17 @@
+# Dependencies
 node_modules/
-dist/
+
+# Build and test outputs
 coverage/
-*.tgz
-.DS_Store
+dist/
+
+# Environment files
 .env
 .env.*
 !.env.example
+
+# Operating system files
+.DS_Store
+
+# Package artifacts
+*.tgz
