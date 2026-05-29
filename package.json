@@ -38,6 +38,7 @@
     "check": "npm run lint && npm test && npm run build && npm run pack:dry-run",
     "lint": "prettier . --check",
     "format": "prettier . --write",
+    "prepare": "npm run build",
     "test": "vitest run",
     "pack:dry-run": "npm pack --dry-run"
   },
