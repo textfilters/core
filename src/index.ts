@@ -6,18 +6,18 @@ export type TextCensor = {
 };
 
 export type TextGuardInput = {
-  actorKey?: string;
-  text: string;
-  nowMs?: number;
+  readonly actorKey?: string;
+  readonly text: string;
+  readonly nowMs?: number;
 };
 
 export type TextGuardAllowedResult = {
-  allowed: true;
+  readonly allowed: true;
 };
 
 export type TextGuardBlockedResult = {
-  allowed: false;
-  reason: string;
+  readonly allowed: false;
+  readonly reason: string;
 };
 
 export type TextGuardResult = TextGuardAllowedResult | TextGuardBlockedResult;
@@ -27,13 +27,13 @@ export type TextGuard = {
   check(input: TextGuardInput): TextGuardResult;
 };
 
-export type TextPipelineAllowedResult = {
-  allowed: true;
-  text: string;
+export type TextPipelineProcessedResult = {
+  readonly allowed: true;
+  readonly text: string;
 };
 
 export type TextPipelineProcessResult =
-  | TextPipelineAllowedResult
+  | TextPipelineProcessedResult
   | TextGuardBlockedResult;
 
 export type TextPipeline = {
