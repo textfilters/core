@@ -1,0 +1,56 @@
+{
+  "name": "@textfilters/core",
+  "version": "0.0.0",
+  "description": "Core primitives and pipeline utilities for composable text filters.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Textfilters contributors",
+  "homepage": "https://github.com/textfilters/core#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/textfilters/core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/textfilters/core/issues"
+  },
+  "keywords": [
+    "text-filtering",
+    "moderation",
+    "pipeline",
+    "typescript"
+  ],
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "npm run lint && npm test && npm run build && npm run pack:dry-run",
+    "lint": "prettier . --check",
+    "format": "prettier . --write",
+    "test": "vitest run",
+    "pack:dry-run": "npm pack --dry-run"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.0",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.2"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
