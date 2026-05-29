@@ -49,7 +49,9 @@ export function toCodePoints(value: unknown): string[] {
 }
 
 export function lowerNfkc(value: unknown): string {
-  return String(value ?? "").normalize("NFKC").toLowerCase();
+  return String(value ?? "")
+    .normalize("NFKC")
+    .toLowerCase();
 }
 
 export function stripZeroWidth(value: unknown): string {
