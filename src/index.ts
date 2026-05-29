@@ -27,11 +27,13 @@ export type TextGuard = {
   check(input: TextGuardInput): TextGuardResult;
 };
 
+export type TextPipelineAllowedResult = {
+  allowed: true;
+  text: string;
+};
+
 export type TextPipelineProcessResult =
-  | {
-      allowed: true;
-      text: string;
-    }
+  | TextPipelineAllowedResult
   | TextGuardBlockedResult;
 
 export type TextPipeline = {
