@@ -97,7 +97,9 @@ export function maskRanges(
   maskChar?: unknown,
 ): string {
   const codePoints = toCodePoints(text);
-  if (codePoints.length === 0 || ranges.length === 0) return codePoints.join("");
+  if (codePoints.length === 0 || ranges.length === 0) {
+    return codePoints.join("");
+  }
 
   const mask = normalizeMaskChar(maskChar);
   const masked = new Array<boolean>(codePoints.length).fill(false);
