@@ -4,7 +4,11 @@ Core primitives and pipeline utilities for composable text filters.
 
 This package contains only shared building blocks. It does not include URL detection, phone detection, profanity dictionaries, spam rules, network calls, databases, or external services.
 
-## Installation
+## Package status
+
+This package is in early bootstrap and is not published to npm yet.
+
+After publication, install it with:
 
 ```sh
 npm install @textfilters/core
@@ -67,8 +71,7 @@ Domain-specific logic belongs in separate packages:
 - `@textfilters/phone`
 - `@textfilters/profanity`
 - `@textfilters/spam`
-- `@textfilters/textfilters`
 
 ## Status
 
-Early bootstrap. Public API may change before the first stable release.
+Early bootstrap. Public API and packaging may change before the first stable release.
