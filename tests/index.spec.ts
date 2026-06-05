@@ -13,7 +13,7 @@ import {
   type TextCensor,
   type TextGuard,
   type TextGuardResult,
-} from "./index";
+} from "../src/index.js";
 
 describe("textfilters core contracts", () => {
   it("allows censors and guards to share stable shapes", () => {
