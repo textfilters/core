@@ -46,11 +46,9 @@ const safeText = createTextPipeline().use(censor).censor("secret message");
 
 ## Release
 
-Releases are managed by release-please.
+Releases are managed by Release Please from Conventional Commit history on `main`. When a Release Please release is created, the workflow runs `npm run check` and publishes the package to GitHub Packages. Release tags keep the `v*` pattern.
 
-Changes are merged into `main` using Conventional Commit messages. release-please opens or updates a release pull request with the next version, changelog, and package metadata updates. After the release pull request is merged, the workflow creates the GitHub tag and release, then publishes the package to GitHub Packages.
-
-The package is currently published to GitHub Packages, not the public npm registry.
+The package is prepared for publication to GitHub Packages, not the public npm registry.
 
 ## License
 
