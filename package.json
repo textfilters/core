@@ -1,6 +1,6 @@
 {
   "name": "@textfilters/core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Core primitives and pipeline utilities for composable text filters.",
   "license": "MIT",
