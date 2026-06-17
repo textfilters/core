@@ -1,6 +1,12 @@
 # @textfilters/core
 
-Core primitives and pipeline utilities for composable text filters.
+Core TypeScript primitives for composable text filtering, content moderation,
+censoring, redaction, normalization, range masking, and moderation pipelines.
+
+Use `@textfilters/core` as the shared foundation for a TypeScript text filtering
+library, chat moderation workflow, UGC moderation service, or custom pipeline
+that combines URL detection, email detection, phone number detection, profanity
+filtering, and anti-spam checks.
 
 ## Installation
 
@@ -17,6 +23,13 @@ Install with GitHub npm authentication configured. GitHub Packages requires auth
 ```sh
 npm install @textfilters/core
 ```
+
+## Use Cases
+
+- Compose multiple content moderation filters into one ordered pipeline.
+- Apply consistent censoring and redaction over UTF-16 and code point ranges.
+- Normalize user-generated text before package-specific matching.
+- Share filter contracts across chat moderation and UGC moderation features.
 
 ## Usage
 
@@ -43,6 +56,16 @@ const safeText = createTextPipeline().use(censor).censor("secret message");
 - `maskRange(value, range, maskChar)`
 - `maskRanges(value, ranges, maskChar)`
 - `maskCodePointRanges(codePoints, ranges, maskChar)`
+
+## Related Textfilters Packages
+
+- `@textfilters/url` for URL detection, obfuscated links, and safe link
+  censoring.
+- `@textfilters/email` for email detection and contact redaction.
+- `@textfilters/phone` for phone number detection and contact redaction.
+- `@textfilters/profanity` for Russian profanity filtering and taxonomy-backed
+  moderation.
+- `@textfilters/spam` for actor-based anti-spam guard checks.
 
 ## Release
 
