@@ -37,7 +37,8 @@
     "lint": "prettier README.md package.json src tests --check",
     "format": "prettier README.md package.json src tests --write",
     "pack:dry-run": "npm pack --dry-run",
-    "check": "npm run lint && npm test && npm run build && npm run pack:dry-run"
+    "smoke:dist": "node --input-type=module --eval \"const core = await import('./dist/index.js'); core.createTextPipeline().censor('ok');\"",
+    "check": "npm run lint && npm test && npm run build && npm run smoke:dist && npm run pack:dry-run"
   },
   "devDependencies": {
     "prettier": "^3.8.3",
