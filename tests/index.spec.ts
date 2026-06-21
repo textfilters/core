@@ -3,6 +3,7 @@ import {
   createTextPipeline,
   lowerNfkc,
   maskCodePointRanges,
+  maskCodePointRangesPreservingLength,
   maskRange,
   maskRanges,
   mergeCodePointRanges,
@@ -68,6 +69,65 @@ describe("textfilters core code point helpers", () => {
     expect(maskCodePointRanges(Array.from("abc"), [[0.5, 2.5]])).toBe("**c");
     expect(maskCodePointRanges(Array.from("abc"), [[0, 2]], "")).toBe("**c");
     expect(maskCodePointRanges(Array.from("abc"), [[0, 2]], "##")).toBe("##c");
+  });
+
+  it("keeps existing code point masking behavior stable for astral input", () => {
+    const source = "a😀z";
+    const masked = maskCodePointRanges(Array.from(source), [[1, 2]]);
+
+    expect(masked).toBe("a*z");
+    expect(masked.length).toBe(3);
+  });
+
+  it("masks code point ranges while preserving UTF-16 length", () => {
+    const source = "a😀z";
+    const masked = maskCodePointRangesPreservingLength(Array.from(source), [
+      [1, 2],
+    ]);
+
+    expect(masked).toBe("a**z");
+    expect(masked.length).toBe(source.length);
+  });
+
+  it("supports BMP custom masks for length-preserving code point masking", () => {
+    expect(
+      maskCodePointRangesPreservingLength(Array.from("a😀z"), [[1, 2]], "#"),
+    ).toBe("a##z");
+    expect(
+      maskCodePointRangesPreservingLength(Array.from("abc"), [[0, 2]], "#"),
+    ).toBe("##c");
+  });
+
+  it("keeps length-preserving masking stable for empty and astral mask chars", () => {
+    const codePoints = Array.from("a😀z");
+
+    expect(maskCodePointRangesPreservingLength(codePoints, [[1, 2]], "")).toBe(
+      "a**z",
+    );
+    expect(
+      maskCodePointRangesPreservingLength(codePoints, [[0, 2]], "😀"),
+    ).toBe("***z");
+  });
+
+  it("handles empty, invalid, clamped, and overlapping length-preserving ranges", () => {
+    expect(maskCodePointRangesPreservingLength(Array.from("value"), [])).toBe(
+      "value",
+    );
+    expect(
+      maskCodePointRangesPreservingLength(Array.from("abcdef"), [
+        [4, 6],
+        [1, 3],
+        [2, 5],
+        [5, 5],
+        [9, 1],
+      ]),
+    ).toBe("a*****");
+    expect(
+      maskCodePointRangesPreservingLength(Array.from("a😀z"), [
+        [-10, 2],
+        [10, 12],
+      ]),
+    ).toBe("***z");
   });
 });
 
