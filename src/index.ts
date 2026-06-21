@@ -210,6 +210,36 @@ export function maskCodePointRanges(
     .join("");
 }
 
+function normalizeLengthPreservingMaskChar(maskChar?: unknown): string {
+  const normalized = normalizeMaskChar(maskChar);
+  return normalized.length === 1 ? normalized : "*";
+}
+
+/**
+ * Masks code point ranges while preserving the source UTF-16 string length.
+ */
+export function maskCodePointRangesPreservingLength(
+  codePoints: readonly string[],
+  ranges: readonly TextCodePointRange[],
+  mask = "*",
+): string {
+  if (ranges.length === 0) return codePoints.join("");
+
+  const maskChar = normalizeLengthPreservingMaskChar(mask);
+  const masked = new Array<boolean>(codePoints.length).fill(false);
+  for (const [start, end] of mergeCodePointRanges(ranges)) {
+    const left = Math.max(0, start);
+    const right = Math.min(codePoints.length, end);
+    for (let i = left; i < right; i++) masked[i] = true;
+  }
+
+  return codePoints
+    .map((codePoint, index) =>
+      masked[index] ? maskChar.repeat(codePoint.length) : codePoint,
+    )
+    .join("");
+}
+
 export function maskRanges(
   value: string,
   ranges: readonly TextRange[],

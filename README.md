@@ -56,6 +56,18 @@ const safeText = createTextPipeline().use(censor).censor("secret message");
 - `maskRange(value, range, maskChar)`
 - `maskRanges(value, ranges, maskChar)`
 - `maskCodePointRanges(codePoints, ranges, maskChar)`
+- `maskCodePointRangesPreservingLength(codePoints, ranges, maskChar)`
+
+`maskCodePointRanges()` masks each covered code point with one normalized mask
+code point and does not split surrogate pairs. This keeps existing callers
+stable when code point counts are the intended unit.
+
+`maskCodePointRangesPreservingLength()` is for filters that collect code point
+ranges but need censored output to preserve the source UTF-16 string length. It
+repeats a BMP mask character by the UTF-16 width of each covered source code
+point, so an astral source symbol is replaced by two BMP mask characters. Empty
+mask values use `*`. Astral mask characters also fall back to `*` because using
+them for BMP source code points would expand the output length.
 
 ## Related Textfilters Packages
 
