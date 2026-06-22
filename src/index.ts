@@ -53,27 +53,47 @@ export type TextCodePointRange = readonly [start: number, end: number];
 const ZERO_WIDTH_RE = /[\u200B-\u200D\u2060\uFEFF]/g;
 
 /**
+ * Normalizes public text-like input before filters process it.
+ */
+export function normalizeTextInput(value: unknown): string {
+  return String(value ?? "");
+}
+
+/**
  * Normalizes arbitrary input for case-insensitive matching with compatibility
  * forms such as fullwidth Latin letters folded to their canonical shape.
  */
 export function lowerNfkc(value: unknown): string {
-  return String(value ?? "")
-    .normalize("NFKC")
-    .toLowerCase();
+  return normalizeTextInput(value).normalize("NFKC").toLowerCase();
 }
 
 /**
  * Removes invisible joiner-like characters before filters compare user text.
  */
 export function stripZeroWidth(value: unknown): string {
-  return String(value ?? "").replace(ZERO_WIDTH_RE, "");
+  return normalizeTextInput(value).replace(ZERO_WIDTH_RE, "");
 }
 
 /**
- * Keeps masking length stable by using exactly one user-visible code point.
+ * Normalizes visible masking to exactly one user-visible code point.
+ */
+export function normalizeVisibleMaskChar(maskChar?: unknown): string {
+  return Array.from(normalizeTextInput(maskChar) || "*")[0] ?? "*";
+}
+
+/**
+ * Keeps UTF-16 length-preserving masking stable with one code unit.
+ */
+export function normalizeLengthPreservingMaskChar(maskChar?: unknown): string {
+  const normalized = normalizeVisibleMaskChar(maskChar);
+  return normalized.length === 1 ? normalized : "*";
+}
+
+/**
+ * Backwards-compatible alias for visible mask character normalization.
  */
 export function normalizeMaskChar(maskChar?: unknown): string {
-  return Array.from(String(maskChar ?? "*"))[0] ?? "*";
+  return normalizeVisibleMaskChar(maskChar);
 }
 
 /**
@@ -121,7 +141,7 @@ export function createTextPipeline(): TextPipeline {
 }
 
 export function toCodePoints(value: unknown): string[] {
-  return Array.from(String(value ?? ""));
+  return Array.from(normalizeTextInput(value));
 }
 
 /**
@@ -210,11 +230,6 @@ export function maskCodePointRanges(
     .join("");
 }
 
-function normalizeLengthPreservingMaskChar(maskChar?: unknown): string {
-  const normalized = normalizeMaskChar(maskChar);
-  return normalized.length === 1 ? normalized : "*";
-}
-
 /**
  * Masks code point ranges while preserving the source UTF-16 string length.
  */
@@ -245,7 +260,7 @@ export function maskRanges(
   ranges: readonly TextRange[],
   maskChar?: unknown,
 ): string {
-  const source = String(value ?? "");
+  const source = normalizeTextInput(value);
   if (source.length === 0 || ranges.length === 0) return source;
 
   const merged = mergeRanges(ranges);
