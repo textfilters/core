@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/textfilters/core/compare/v0.2.0...v0.3.0) (2026-06-22)
+
+
+### Features
+
+* add shared normalization helpers ([#15](https://github.com/textfilters/core/issues/15)) ([b2a8cd8](https://github.com/textfilters/core/commit/b2a8cd8c9675d9c94a34432302addbcbb76e7910))
+
 ## [0.2.0](https://github.com/textfilters/core/compare/v0.1.2...v0.2.0) (2026-06-21)
 
 
