@@ -47,8 +47,11 @@ const safeText = createTextPipeline().use(censor).censor("secret message");
 ## API
 
 - `createTextPipeline()`
+- `normalizeTextInput(value)`
 - `lowerNfkc(value)`
 - `stripZeroWidth(value)`
+- `normalizeVisibleMaskChar(maskChar)`
+- `normalizeLengthPreservingMaskChar(maskChar)`
 - `normalizeMaskChar(maskChar)`
 - `toCodePoints(value)`
 - `mergeRanges(ranges)`
@@ -57,6 +60,16 @@ const safeText = createTextPipeline().use(censor).censor("secret message");
 - `maskRanges(value, ranges, maskChar)`
 - `maskCodePointRanges(codePoints, ranges, maskChar)`
 - `maskCodePointRangesPreservingLength(codePoints, ranges, maskChar)`
+
+`normalizeTextInput()` converts public text-like input to a string while mapping
+`null` and `undefined` to an empty string. Matching helpers such as
+`lowerNfkc()`, `stripZeroWidth()`, and `toCodePoints()` use the same nullish
+input behavior.
+
+`normalizeVisibleMaskChar()` keeps visible masking to one user-visible code
+point. `normalizeMaskChar()` remains a backwards-compatible alias for that
+behavior. `normalizeLengthPreservingMaskChar()` is stricter and returns one
+UTF-16 code unit, falling back to `*` for empty or astral mask values.
 
 `maskCodePointRanges()` masks each covered code point with one normalized mask
 code point and does not split surrogate pairs. This keeps existing callers

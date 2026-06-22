@@ -8,7 +8,10 @@ import {
   maskRanges,
   mergeCodePointRanges,
   mergeRanges,
+  normalizeLengthPreservingMaskChar,
   normalizeMaskChar,
+  normalizeTextInput,
+  normalizeVisibleMaskChar,
   stripZeroWidth,
   toCodePoints,
   type TextCensor,
@@ -37,6 +40,14 @@ describe("textfilters core contracts", () => {
 });
 
 describe("textfilters core normalization helpers", () => {
+  it("normalizes public text input from unknown values", () => {
+    expect(normalizeTextInput("value")).toBe("value");
+    expect(normalizeTextInput(null)).toBe("");
+    expect(normalizeTextInput(undefined)).toBe("");
+    expect(normalizeTextInput(123)).toBe("123");
+    expect(normalizeTextInput(false)).toBe("false");
+  });
+
   it("converts unknown values to code points", () => {
     expect(toCodePoints("a😀b")).toEqual(["a", "😀", "b"]);
     expect(toCodePoints(null)).toEqual([]);
@@ -56,6 +67,19 @@ describe("textfilters core normalization helpers", () => {
     expect(normalizeMaskChar()).toBe("*");
     expect(normalizeMaskChar("##")).toBe("#");
     expect(normalizeMaskChar("😀x")).toBe("😀");
+  });
+
+  it("normalizes visible mask chars separately from length-preserving masks", () => {
+    expect(normalizeVisibleMaskChar()).toBe("*");
+    expect(normalizeVisibleMaskChar("")).toBe("*");
+    expect(normalizeVisibleMaskChar("ab")).toBe("a");
+    expect(normalizeVisibleMaskChar("😀x")).toBe("😀");
+    expect(normalizeMaskChar("😀x")).toBe("😀");
+
+    expect(normalizeLengthPreservingMaskChar()).toBe("*");
+    expect(normalizeLengthPreservingMaskChar("")).toBe("*");
+    expect(normalizeLengthPreservingMaskChar("ab")).toBe("a");
+    expect(normalizeLengthPreservingMaskChar("😀x")).toBe("*");
   });
 });
 
