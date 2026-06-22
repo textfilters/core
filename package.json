@@ -36,6 +36,7 @@
     "test": "vitest run",
     "lint": "prettier README.md package.json src tests --check",
     "format": "prettier README.md package.json src tests --write",
+    "prepack": "npm run build",
     "pack:dry-run": "npm pack --dry-run",
     "smoke:dist": "node --input-type=module --eval \"const core = await import('./dist/index.js'); core.createTextPipeline().censor('ok');\"",
     "check": "npm run lint && npm test && npm run build && npm run smoke:dist && npm run pack:dry-run"
