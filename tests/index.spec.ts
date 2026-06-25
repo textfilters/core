@@ -43,11 +43,15 @@ describe("textfilters core contracts", () => {
 
 describe("textfilters core normalization helpers", () => {
   it("normalizes public text input from unknown values", () => {
+    expect(normalizeTextInput("")).toBe("");
     expect(normalizeTextInput("value")).toBe("value");
     expect(normalizeTextInput(null)).toBe("");
     expect(normalizeTextInput(undefined)).toBe("");
     expect(normalizeTextInput(123)).toBe("123");
     expect(normalizeTextInput(false)).toBe("false");
+    expect(normalizeTextInput({ toString: () => "object-text" })).toBe(
+      "object-text",
+    );
   });
 
   it("converts unknown values to code points", () => {
