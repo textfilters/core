@@ -73,6 +73,7 @@ const normalized = normalizeRepeatedText.process("ＨＥＬＬＯ");
 - `maskRanges(value, ranges, maskChar)`
 - `maskCodePointRanges(codePoints, ranges, maskChar)`
 - `maskCodePointRangesPreservingLength(codePoints, ranges, maskChar)`
+- `censorCodePointRanges(codePoints, ranges, maskChar)`
 
 `normalizeTextInput()` converts public text-like input to a string while mapping
 `null` and `undefined` to an empty string. Matching helpers such as
@@ -105,6 +106,11 @@ repeats a BMP mask character by the UTF-16 width of each covered source code
 point, so an astral source symbol is replaced by two BMP mask characters. Empty
 mask values use `*`. Astral mask characters also fall back to `*` because using
 them for BMP source code points would expand the output length.
+
+`censorCodePointRanges()` is the small shared helper for packages that already
+collect code point ranges and only need length-preserving censored output. It
+returns the original code points joined when there are no ranges and otherwise
+delegates to `maskCodePointRangesPreservingLength()`.
 
 ## Related Textfilters Packages
 
