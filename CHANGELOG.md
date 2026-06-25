@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1](https://github.com/textfilters/core/compare/v0.3.0...v0.3.1) (2026-06-25)
+
+
+### Bug Fixes
+
+* document public input normalization contract ([641e9a6](https://github.com/textfilters/core/commit/641e9a6db779fa18879367d016d00aa1cab2335b))
+
+
+### Performance Improvements
+
+* improve range masking performance ([7a89fb4](https://github.com/textfilters/core/commit/7a89fb444acf8c484ab49bf7b3df3ae60f2c04e6))
+
 ## [0.3.0](https://github.com/textfilters/core/compare/v0.2.0...v0.3.0) (2026-06-22)
 
 
