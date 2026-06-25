@@ -34,7 +34,12 @@ npm install @textfilters/core
 ## Usage
 
 ```ts
-import { createTextPipeline, type TextCensor } from "@textfilters/core";
+import {
+  createCachedTextProcessor,
+  createTextPipeline,
+  lowerNfkc,
+  type TextCensor,
+} from "@textfilters/core";
 
 const censor: TextCensor = {
   name: "example",
@@ -42,11 +47,19 @@ const censor: TextCensor = {
 };
 
 const safeText = createTextPipeline().use(censor).censor("secret message");
+
+const normalizeRepeatedText = createCachedTextProcessor(
+  (text) => lowerNfkc(text),
+  { maxEntries: 256 },
+);
+
+const normalized = normalizeRepeatedText.process("ＨＥＬＬＯ");
 ```
 
 ## API
 
 - `createTextPipeline()`
+- `createCachedTextProcessor(processor, options)`
 - `normalizeTextInput(value)`
 - `lowerNfkc(value)`
 - `stripZeroWidth(value)`
@@ -65,6 +78,17 @@ const safeText = createTextPipeline().use(censor).censor("secret message");
 `null` and `undefined` to an empty string. Matching helpers such as
 `lowerNfkc()`, `stripZeroWidth()`, and `toCodePoints()` use the same nullish
 input behavior.
+
+`createCachedTextProcessor()` creates an opt-in, per-instance bounded cache for
+pure repeated text processing. Use it when the same text is normalized, parsed,
+or transformed repeatedly with the same configuration. Each helper owns its own
+cache, `maxEntries` bounds the retained text entries, and `clear()` drops cached
+results without changing configuration.
+
+Do not use `createCachedTextProcessor()` for stateful guard checks, actor-aware
+rate limits, time-dependent decisions, or processors whose result depends on
+external mutable state. It has no hidden global behavior and does not affect
+existing filters unless callers explicitly opt in.
 
 `normalizeVisibleMaskChar()` keeps visible masking to one user-visible code
 point. `normalizeMaskChar()` remains a backwards-compatible alias for that
