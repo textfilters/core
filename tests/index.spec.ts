@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  censorCodePointRanges,
   createCachedTextProcessor,
   createTextPipeline,
   lowerNfkc,
@@ -112,6 +113,27 @@ describe("textfilters core code point helpers", () => {
 
     expect(masked).toBe("a**z");
     expect(masked.length).toBe(source.length);
+  });
+
+  it("censors code point ranges while preserving UTF-16 length", () => {
+    const source = "a😀z";
+    const censored = censorCodePointRanges(Array.from(source), [[1, 2]]);
+
+    expect(censored).toBe("a**z");
+    expect(censored.length).toBe(source.length);
+  });
+
+  it("keeps source text unchanged when censoring empty code point ranges", () => {
+    expect(censorCodePointRanges(Array.from("clean"), [])).toBe("clean");
+  });
+
+  it("supports custom masks for code point range censoring", () => {
+    expect(censorCodePointRanges(Array.from("a😀z"), [[1, 2]], "#")).toBe(
+      "a##z",
+    );
+    expect(censorCodePointRanges(Array.from("abc"), [[0, 2]], "😀")).toBe(
+      "**c",
+    );
   });
 
   it("supports BMP custom masks for length-preserving code point masking", () => {

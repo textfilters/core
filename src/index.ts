@@ -323,6 +323,19 @@ export function maskCodePointRangesPreservingLength(
     .join("");
 }
 
+/**
+ * Censors collected code point ranges while preserving source UTF-16 length.
+ */
+export function censorCodePointRanges(
+  codePoints: readonly string[],
+  ranges: readonly TextCodePointRange[],
+  mask = "*",
+): string {
+  return ranges.length === 0
+    ? codePoints.join("")
+    : maskCodePointRangesPreservingLength(codePoints, ranges, mask);
+}
+
 export function maskRanges(
   value: string,
   ranges: readonly TextRange[],
