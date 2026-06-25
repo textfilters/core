@@ -269,21 +269,22 @@ export function maskRanges(
   const mask = normalizeMaskChar(maskChar);
   let offset = 0;
   let rangeIndex = 0;
+  let result = "";
 
   // Iterate by code point while tracking UTF-16 offsets, because TextRange
   // callers use string indexes but masking must not split astral characters.
-  return Array.from(source)
-    .map((codePoint) => {
-      const start = offset;
-      const end = start + codePoint.length;
-      offset = end;
+  for (const codePoint of source) {
+    const start = offset;
+    const end = start + codePoint.length;
+    offset = end;
 
-      while (rangeIndex < merged.length && merged[rangeIndex][1] <= start) {
-        rangeIndex++;
-      }
+    while (rangeIndex < merged.length && merged[rangeIndex][1] <= start) {
+      rangeIndex++;
+    }
 
-      const range = merged[rangeIndex];
-      return range && range[0] < end && range[1] > start ? mask : codePoint;
-    })
-    .join("");
+    const range = merged[rangeIndex];
+    result += range && range[0] < end && range[1] > start ? mask : codePoint;
+  }
+
+  return result;
 }
