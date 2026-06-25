@@ -75,10 +75,17 @@ const normalized = normalizeRepeatedText.process("ＨＥＬＬＯ");
 - `maskCodePointRangesPreservingLength(codePoints, ranges, maskChar)`
 - `censorCodePointRanges(codePoints, ranges, maskChar)`
 
+### Public Input Normalization
+
 `normalizeTextInput()` converts public text-like input to a string while mapping
-`null` and `undefined` to an empty string. Matching helpers such as
-`lowerNfkc()`, `stripZeroWidth()`, and `toCodePoints()` use the same nullish
-input behavior.
+`null` and `undefined` to an empty string. This is the shared public input
+contract for textfilters packages: public censor, analyze, and check helpers
+should normalize raw caller input with `normalizeTextInput()` before matching or
+masking. Non-nullish values use JavaScript string conversion, so numbers,
+booleans, symbols, and objects keep the same behavior as `String(value)`.
+
+Matching helpers such as `lowerNfkc()`, `stripZeroWidth()`, and `toCodePoints()`
+use the same nullish input behavior.
 
 `createCachedTextProcessor()` creates an opt-in, per-instance bounded cache for
 pure repeated text processing. Use it when the same text is normalized, parsed,
