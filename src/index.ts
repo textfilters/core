@@ -36,6 +36,17 @@ export type TextPipelineProcessResult =
   | TextPipelineProcessedResult
   | TextGuardBlockedResult;
 
+export interface CachedTextProcessorOptions {
+  readonly maxEntries?: number;
+}
+
+export interface CachedTextProcessor<T> {
+  readonly maxEntries: number;
+  readonly size: number;
+  process(value: unknown): T;
+  clear(): void;
+}
+
 /**
  * Composes guards and censors in deterministic registration order.
  */
@@ -51,6 +62,8 @@ export type TextRange = readonly [start: number, end: number];
 export type TextCodePointRange = readonly [start: number, end: number];
 
 const ZERO_WIDTH_RE = /[\u200B-\u200D\u2060\uFEFF]/g;
+const DEFAULT_CACHED_TEXT_MAX_ENTRIES = 256;
+const MAX_CACHED_TEXT_MAX_ENTRIES = 10_000;
 
 /**
  * Normalizes public text-like input before filters process it.
@@ -94,6 +107,61 @@ export function normalizeLengthPreservingMaskChar(maskChar?: unknown): string {
  */
 export function normalizeMaskChar(maskChar?: unknown): string {
   return normalizeVisibleMaskChar(maskChar);
+}
+
+/**
+ * Creates an opt-in bounded helper for repeated identical text processing.
+ */
+export function createCachedTextProcessor<T>(
+  processor: (text: string) => T,
+  options: CachedTextProcessorOptions = {},
+): CachedTextProcessor<T> {
+  if (typeof processor !== "function") {
+    throw new TypeError("processor must be a function");
+  }
+
+  const maxEntries = normalizeCacheMaxEntries(options.maxEntries);
+  const cache = new Map<string, T>();
+
+  return {
+    maxEntries,
+
+    get size() {
+      return cache.size;
+    },
+
+    process(value) {
+      const text = normalizeTextInput(value);
+      if (maxEntries === 0) return processor(text);
+
+      if (cache.has(text)) {
+        const cached = cache.get(text)!;
+        cache.delete(text);
+        cache.set(text, cached);
+        return cached;
+      }
+
+      const result = processor(text);
+      cache.set(text, result);
+      if (cache.size > maxEntries) {
+        const oldestKey = cache.keys().next().value;
+        if (oldestKey !== undefined) {
+          cache.delete(oldestKey);
+        }
+      }
+      return result;
+    },
+
+    clear() {
+      cache.clear();
+    },
+  };
+}
+
+function normalizeCacheMaxEntries(maxEntries: unknown): number {
+  const parsed = Math.trunc(Number(maxEntries));
+  if (!Number.isFinite(parsed)) return DEFAULT_CACHED_TEXT_MAX_ENTRIES;
+  return Math.min(Math.max(parsed, 0), MAX_CACHED_TEXT_MAX_ENTRIES);
 }
 
 /**
