@@ -36,9 +36,11 @@ npm install @textfilters/core
 ```ts
 import {
   createCachedTextProcessor,
+  createTextRangePipeline,
   createTextPipeline,
   lowerNfkc,
   type TextCensor,
+  type TextRangeScanner,
 } from "@textfilters/core";
 
 const censor: TextCensor = {
@@ -54,11 +56,23 @@ const normalizeRepeatedText = createCachedTextProcessor(
 );
 
 const normalized = normalizeRepeatedText.process("ＨＥＬＬＯ");
+
+const scanner: TextRangeScanner = ({ text }) =>
+  text.includes("secret") ? [[0, 6]] : [];
+
+const rangeSafeText = createTextRangePipeline()
+  .use(scanner)
+  .censor("secret message");
 ```
 
 ## API
 
 - `createTextPipeline()`
+- `createTextRangePipeline()`
+- `createTextScanInput(value)`
+- `createTextRangeScanResult(ranges, metadata)`
+- `runTextRangeScanner(scanner, input)`
+- `scanTextRanges(value, scanners)`
 - `createCachedTextProcessor(processor, options)`
 - `normalizeTextInput(value)`
 - `lowerNfkc(value)`
@@ -118,6 +132,19 @@ them for BMP source code points would expand the output length.
 collect code point ranges and only need length-preserving censored output. It
 returns the original code points joined when there are no ranges and otherwise
 delegates to `maskCodePointRangesPreservingLength()`.
+
+### Range Scanner Pipeline
+
+`TextRangeScanner` is the shared scanner contract for packages that collect
+code point ranges before masking. A scanner can be a function or an object with
+a `scan()` method. Scanners receive `TextScanInput`, which contains the
+normalized source text and its code point array.
+
+`createTextRangePipeline()` collects ranges from registered scanners, merges
+overlaps in code point order, and masks once with
+`censorCodePointRanges()`. This keeps scanner packages independent while
+sharing one final masking step. The existing `createTextPipeline()` and
+`TextCensor` behavior remain unchanged.
 
 ## Related Textfilters Packages
 

@@ -7,6 +7,9 @@ describe("textfilters core public entrypoint", () => {
       "censorCodePointRanges",
       "createCachedTextProcessor",
       "createTextPipeline",
+      "createTextRangePipeline",
+      "createTextRangeScanResult",
+      "createTextScanInput",
       "lowerNfkc",
       "maskCodePointRanges",
       "maskCodePointRangesPreservingLength",
@@ -18,6 +21,8 @@ describe("textfilters core public entrypoint", () => {
       "normalizeMaskChar",
       "normalizeTextInput",
       "normalizeVisibleMaskChar",
+      "runTextRangeScanner",
+      "scanTextRanges",
       "stripZeroWidth",
       "toCodePoints",
     ]);

@@ -60,3 +60,50 @@ export interface TextPipeline {
 
 export type TextRange = readonly [start: number, end: number];
 export type TextCodePointRange = readonly [start: number, end: number];
+
+export interface TextScanInput {
+  readonly text: string;
+  readonly codePoints: readonly string[];
+}
+
+export type TextRangeScanMetadata = Readonly<Record<string, unknown>>;
+
+export interface TextRangeScanResult {
+  readonly ranges: readonly TextCodePointRange[];
+  readonly metadata?: TextRangeScanMetadata;
+}
+
+export type TextRangeScannerOutput =
+  | readonly TextCodePointRange[]
+  | TextRangeScanResult;
+
+export type TextRangeScannerFunction = (
+  input: TextScanInput,
+) => TextRangeScannerOutput;
+
+export type TextRangeScanner =
+  | TextRangeScannerFunction
+  | {
+      readonly name?: string;
+      scan(input: TextScanInput): TextRangeScannerOutput;
+    };
+
+export interface TextRangePipelineScanResult {
+  readonly text: string;
+  readonly codePoints: readonly string[];
+  readonly ranges: readonly TextCodePointRange[];
+  readonly scanResults: readonly TextRangeScanResult[];
+}
+
+export interface TextRangePipelineCensorResult {
+  readonly text: string;
+  readonly ranges: readonly TextCodePointRange[];
+  readonly scanResults: readonly TextRangeScanResult[];
+}
+
+export interface TextRangePipeline {
+  use(scanner: TextRangeScanner): TextRangePipeline;
+  scan(value: unknown): TextRangePipelineScanResult;
+  censor(value: unknown, mask?: string): string;
+  process(value: unknown, mask?: string): TextRangePipelineCensorResult;
+}
