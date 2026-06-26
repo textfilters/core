@@ -13,6 +13,15 @@ export type {
   TextPipelineProcessedResult,
   TextPipelineProcessResult,
   TextRange,
+  TextRangePipeline,
+  TextRangePipelineCensorResult,
+  TextRangePipelineScanResult,
+  TextRangeScanner,
+  TextRangeScannerFunction,
+  TextRangeScannerOutput,
+  TextRangeScanMetadata,
+  TextRangeScanResult,
+  TextScanInput,
 } from "./contracts.js";
 export { createCachedTextProcessor } from "./cache.js";
 export {
@@ -33,3 +42,10 @@ export {
 } from "./masking.js";
 export { createTextPipeline } from "./pipeline.js";
 export { mergeCodePointRanges, mergeRanges } from "./ranges.js";
+export {
+  createTextRangePipeline,
+  createTextRangeScanResult,
+  createTextScanInput,
+  runTextRangeScanner,
+  scanTextRanges,
+} from "./scanner.js";
