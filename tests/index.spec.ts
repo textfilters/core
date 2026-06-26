@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import * as core from "../src/index.js";
 import {
   censorCodePointRanges,
   createCachedTextProcessor,
@@ -20,6 +21,29 @@ import {
   type TextGuard,
   type TextGuardResult,
 } from "../src/index.js";
+
+describe("textfilters core public entrypoint", () => {
+  it("keeps the runtime export surface stable", () => {
+    expect(Object.keys(core).sort()).toEqual([
+      "censorCodePointRanges",
+      "createCachedTextProcessor",
+      "createTextPipeline",
+      "lowerNfkc",
+      "maskCodePointRanges",
+      "maskCodePointRangesPreservingLength",
+      "maskRange",
+      "maskRanges",
+      "mergeCodePointRanges",
+      "mergeRanges",
+      "normalizeLengthPreservingMaskChar",
+      "normalizeMaskChar",
+      "normalizeTextInput",
+      "normalizeVisibleMaskChar",
+      "stripZeroWidth",
+      "toCodePoints",
+    ]);
+  });
+});
 
 describe("textfilters core contracts", () => {
   it("allows censors and guards to share stable shapes", () => {
