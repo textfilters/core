@@ -67,6 +67,7 @@ const rangeSafeText = createTextRangePipeline()
   .censor("secret message");
 
 const allocationAwareScanner: AllocationAwareRangeScanner = {
+  allocationAware: true,
   check: (input) => input.hints.hasDot,
   scan: (input, sink) => {
     const index = input.codePoints.indexOf(".");

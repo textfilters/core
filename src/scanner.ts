@@ -54,6 +54,14 @@ export function createTextHints(
   for (const codePoint of codePoints) {
     const code = codePoint.codePointAt(0) ?? 0;
 
+    if (isWhitespaceCodePoint(codePoint)) {
+      hasWhitespace = true;
+      if (code > 0x7f) {
+        hasNonAscii = true;
+      }
+      continue;
+    }
+
     if (code > 0x7f) {
       hasNonAscii = true;
       continue;
@@ -66,18 +74,6 @@ export function createTextHints(
 
     if ((code >= 0x41 && code <= 0x5a) || (code >= 0x61 && code <= 0x7a)) {
       hasAsciiLetter = true;
-      continue;
-    }
-
-    if (
-      code === 0x20 ||
-      code === 0x09 ||
-      code === 0x0a ||
-      code === 0x0d ||
-      code === 0x0b ||
-      code === 0x0c
-    ) {
-      hasWhitespace = true;
       continue;
     }
 
@@ -131,7 +127,10 @@ export function runTextRangeScanner(
     scanPreparedTextRanges(scanner, prepared, (match) => {
       matches.push(match);
     });
-    return createTextRangeScanResult(matches.map((match) => match.range));
+    return createTextRangeScanResult(
+      matches.map((match) => match.range),
+      scanMetadataFromMatches(matches),
+    );
   }
 
   const output =
@@ -261,12 +260,27 @@ function isAllocationAwareRangeScanner(
   return (
     typeof scanner === "object" &&
     scanner !== null &&
+    "allocationAware" in scanner &&
+    scanner.allocationAware === true &&
     "check" in scanner &&
     typeof scanner.check === "function" &&
     "scan" in scanner &&
-    typeof scanner.scan === "function" &&
-    scanner.scan.length >= 2
+    typeof scanner.scan === "function"
   );
+}
+
+function scanMetadataFromMatches(
+  matches: readonly RangeMatch[],
+): TextRangeScanMetadata | undefined {
+  const metadata = matches.flatMap((match) =>
+    match.metadata === undefined ? [] : [match.metadata],
+  );
+
+  return metadata.length === 0 ? undefined : { matches: metadata };
+}
+
+function isWhitespaceCodePoint(codePoint: string): boolean {
+  return /\s/u.test(codePoint);
 }
 
 function ensurePreparedText(input: TextScanInput): PreparedText {

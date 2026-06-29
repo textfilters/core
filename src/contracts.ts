@@ -113,6 +113,7 @@ export type TextRangeScannerFunction = (
 
 export interface AllocationAwareRangeScanner {
   readonly name?: string;
+  readonly allocationAware: true;
   check(input: PreparedText): boolean;
   scan(input: PreparedText, sink: RangeMatchSink): boolean | void;
 }

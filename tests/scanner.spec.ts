@@ -56,6 +56,12 @@ describe("textfilters scanner contracts", () => {
       hasAsciiOnly: false,
       hasNonAscii: true,
     });
+
+    expect(createTextHints("a\u00a0b")).toMatchObject({
+      hasAsciiOnly: false,
+      hasNonAscii: true,
+      hasWhitespace: true,
+    });
   });
 
   it("normalizes scanner results and preserves metadata", () => {
@@ -94,14 +100,16 @@ describe("textfilters scanner contracts", () => {
   it("runs allocation-aware scanner objects through a sink", () => {
     const input = createPreparedText("abc hit");
     const scanner: AllocationAwareRangeScanner = {
+      allocationAware: true,
       check: (prepared) => prepared.hints.hasWhitespace,
       scan: (_prepared, sink) => {
-        sink({ range: [4, 7] });
+        sink({ range: [4, 7], metadata: { kind: "word" } });
       },
     };
 
     expect(runTextRangeScanner(scanner, input)).toEqual({
       ranges: [[4, 7]],
+      metadata: { matches: [{ kind: "word" }] },
     });
   });
 
@@ -109,7 +117,9 @@ describe("textfilters scanner contracts", () => {
     const input = createPreparedText("abc");
     const scanner = {
       check: () => true,
-      scan: () => ({ ranges: [[0, 3]] }),
+      scan: (_input: TextScanInput, _legacyOptions?: unknown) => ({
+        ranges: [[0, 3]] as const,
+      }),
     };
 
     expect(runTextRangeScanner(scanner, input)).toEqual({
@@ -122,6 +132,7 @@ describe("textfilters scanner contracts", () => {
     const input = createPreparedText("one two");
     const seen: string[] = [];
     const scanner: AllocationAwareRangeScanner = {
+      allocationAware: true,
       check: () => true,
       scan: (_prepared, sink) => {
         seen.push("first");
@@ -200,6 +211,7 @@ describe("textfilters range scanner pipeline", () => {
   it("checks allocation-aware scanners without collecting matches", () => {
     const events: string[] = [];
     const scanner: AllocationAwareRangeScanner = {
+      allocationAware: true,
       check: (input) => {
         events.push(`check:${input.hints.hasDot}`);
         return input.hints.hasDot;
@@ -219,6 +231,7 @@ describe("textfilters range scanner pipeline", () => {
   it("reuses prepared text hints across registered scanners", () => {
     const seenHints: unknown[] = [];
     const first: AllocationAwareRangeScanner = {
+      allocationAware: true,
       check: (input) => input.hints.hasDot,
       scan: (input, sink) => {
         seenHints.push(input.hints);
@@ -226,6 +239,7 @@ describe("textfilters range scanner pipeline", () => {
       },
     };
     const second: AllocationAwareRangeScanner = {
+      allocationAware: true,
       check: (input) => input.hints.hasDot,
       scan: (input, sink) => {
         seenHints.push(input.hints);
