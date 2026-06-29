@@ -69,6 +69,13 @@ describe("textfilters scanner contracts", () => {
       hasPunctuation: true,
       punctuationCount: 1,
     });
+
+    expect(createTextHints("a１٣")).toMatchObject({
+      hasAsciiOnly: false,
+      hasNonAscii: true,
+      hasDigit: true,
+      digitCount: 2,
+    });
   });
 
   it("normalizes scanner results and preserves metadata", () => {
@@ -118,6 +125,31 @@ describe("textfilters scanner contracts", () => {
       ranges: [[4, 7]],
       metadata: { matches: [{ kind: "word" }] },
     });
+  });
+
+  it("recomputes stale or missing hints on plain scan input", () => {
+    const scanner: AllocationAwareRangeScanner = {
+      allocationAware: true,
+      check: (prepared) => prepared.hints.hasAtSign,
+      scan: (_prepared, sink) => {
+        sink({ range: [0, 4] });
+      },
+    };
+    const input = {
+      text: "user@example.com",
+      codePoints: Array.from("user@example.com"),
+      hints: createTextHints("plain"),
+    };
+    const inputWithMissingHints = {
+      text: "user@example.com",
+      codePoints: Array.from("user@example.com"),
+      hints: undefined,
+    };
+
+    expect(runTextRangeScanner(scanner, input).ranges).toEqual([[0, 4]]);
+    expect(runTextRangeScanner(scanner, inputWithMissingHints).ranges).toEqual([
+      [0, 4],
+    ]);
   });
 
   it("preserves legacy object scanners that also expose check helpers", () => {
@@ -275,6 +307,27 @@ describe("textfilters range scanner pipeline", () => {
 
     expect(pipeline.check("has hit")).toBe(true);
     expect(seen).toEqual(["first"]);
+  });
+
+  it("ignores invalid allocation-aware ranges while checking", () => {
+    const invalidOnly = createTextRangePipeline().use({
+      allocationAware: true,
+      check: () => true,
+      scan: (_input, sink) => {
+        sink({ range: [2, 2] });
+      },
+    });
+    const invalidThenValid = createTextRangePipeline().use({
+      allocationAware: true,
+      check: () => true,
+      scan: (_input, sink) => {
+        sink({ range: [2, 2] });
+        sink({ range: [0, 1] });
+      },
+    });
+
+    expect(invalidOnly.check("abc")).toBe(false);
+    expect(invalidThenValid.check("abc")).toBe(true);
   });
 
   it("reuses prepared text hints across registered scanners", () => {

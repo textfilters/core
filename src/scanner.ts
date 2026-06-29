@@ -19,6 +19,7 @@ import { censorCodePointRanges } from "./masking.js";
 import { mergeCodePointRanges } from "./ranges.js";
 
 const UNICODE_PUNCTUATION_RE = /\p{P}/u;
+const UNICODE_DECIMAL_DIGIT_RE = /\p{Decimal_Number}/u;
 
 export function createTextScanInput(value: unknown): TextScanInput {
   const prepared = createPreparedText(value);
@@ -64,16 +65,19 @@ export function createTextHints(
       continue;
     }
 
+    if (UNICODE_DECIMAL_DIGIT_RE.test(codePoint)) {
+      digitCount++;
+      if (code > 0x7f) {
+        hasNonAscii = true;
+      }
+      continue;
+    }
+
     if (code > 0x7f) {
       hasNonAscii = true;
       if (UNICODE_PUNCTUATION_RE.test(codePoint)) {
         punctuationCount++;
       }
-      continue;
-    }
-
-    if (code >= 0x30 && code <= 0x39) {
-      digitCount++;
       continue;
     }
 
@@ -211,7 +215,11 @@ export function checkTextRanges(
   for (const scanner of scanners) {
     if (isAllocationAwareRangeScanner(scanner)) {
       let found = false;
-      scanPreparedTextRanges(scanner, input, () => {
+      scanPreparedTextRanges(scanner, input, (match) => {
+        if (mergeCodePointRanges([match.range]).length === 0) {
+          return true;
+        }
+
         found = true;
         return false;
       });
@@ -296,10 +304,42 @@ function isWhitespaceCodePoint(codePoint: string): boolean {
 }
 
 function ensurePreparedText(input: TextScanInput): PreparedText {
-  if ("hints" in input) return input as PreparedText;
+  const hints = (input as { readonly hints?: unknown }).hints;
+  const computedHints = createTextHints(input.text, input.codePoints);
+
+  if (isSameTextHints(hints, computedHints)) {
+    return input as PreparedText;
+  }
 
   return {
     ...input,
-    hints: createTextHints(input.text, input.codePoints),
+    hints: computedHints,
   };
+}
+
+function isSameTextHints(
+  actual: unknown,
+  expected: TextHints,
+): actual is TextHints {
+  if (typeof actual !== "object" || actual === null) return false;
+
+  const hints = actual as Partial<TextHints>;
+  return (
+    hints.textLength === expected.textLength &&
+    hints.codePointLength === expected.codePointLength &&
+    hints.isEmpty === expected.isEmpty &&
+    hints.hasAsciiOnly === expected.hasAsciiOnly &&
+    hints.hasNonAscii === expected.hasNonAscii &&
+    hints.hasDigit === expected.hasDigit &&
+    hints.digitCount === expected.digitCount &&
+    hints.hasAsciiLetter === expected.hasAsciiLetter &&
+    hints.hasWhitespace === expected.hasWhitespace &&
+    hints.hasPunctuation === expected.hasPunctuation &&
+    hints.punctuationCount === expected.punctuationCount &&
+    hints.hasAtSign === expected.hasAtSign &&
+    hints.hasDot === expected.hasDot &&
+    hints.hasSlash === expected.hasSlash &&
+    hints.hasColon === expected.hasColon &&
+    hints.hasPlus === expected.hasPlus
+  );
 }
