@@ -264,7 +264,8 @@ function isAllocationAwareRangeScanner(
     "check" in scanner &&
     typeof scanner.check === "function" &&
     "scan" in scanner &&
-    typeof scanner.scan === "function"
+    typeof scanner.scan === "function" &&
+    scanner.scan.length >= 2
   );
 }
 

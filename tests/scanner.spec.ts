@@ -105,6 +105,19 @@ describe("textfilters scanner contracts", () => {
     });
   });
 
+  it("preserves legacy object scanners that also expose check helpers", () => {
+    const input = createPreparedText("abc");
+    const scanner = {
+      check: () => true,
+      scan: () => ({ ranges: [[0, 3]] }),
+    };
+
+    expect(runTextRangeScanner(scanner, input)).toEqual({
+      ranges: [[0, 3]],
+    });
+    expect(checkTextRanges("abc", [scanner])).toBe(true);
+  });
+
   it("stops allocation-aware scanning when the sink returns false", () => {
     const input = createPreparedText("one two");
     const seen: string[] = [];
@@ -191,7 +204,7 @@ describe("textfilters range scanner pipeline", () => {
         events.push(`check:${input.hints.hasDot}`);
         return input.hints.hasDot;
       },
-      scan: () => {
+      scan: (_input, _sink) => {
         events.push("scan");
       },
     };
