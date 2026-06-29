@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.2](https://github.com/textfilters/core/compare/v0.3.1...v0.3.2) (2026-06-30)
+
+
+### Features
+
+* add allocation-aware scanner contract ([ecf6229](https://github.com/textfilters/core/commit/ecf62298d4d2c6f95384be0df91c151eeaf9ba60))
+* add core range scanner pipeline ([dd979de](https://github.com/textfilters/core/commit/dd979de3c214caeb7968845faf7f4f58f91f2c9f))
+
+
+### Code Refactoring
+
+* split core source modules ([4cd5505](https://github.com/textfilters/core/commit/4cd55051aaf213b264cc770cf853e779e9ba7e14))
+
 ## [0.3.1](https://github.com/textfilters/core/compare/v0.3.0...v0.3.1) (2026-06-25)
 
 
