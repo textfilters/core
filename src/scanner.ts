@@ -138,10 +138,10 @@ export function runTextRangeScanner(
     const prepared = ensurePreparedText(input);
     const matches: RangeMatch[] = [];
     scanPreparedTextRanges(scanner, prepared, (match) => {
-      matches.push({
-        range: [match.range[0], match.range[1]],
-        ...(match.metadata === undefined ? {} : { metadata: match.metadata }),
-      });
+      const snapshot = snapshotRangeMatch(match);
+      if (snapshot !== undefined) {
+        matches.push(snapshot);
+      }
     });
     return createTextRangeScanResult(
       matches.map((match) => match.range),
@@ -219,16 +219,15 @@ export function checkTextRanges(
   value: unknown,
   scanners: readonly TextRangeScanner[],
 ): boolean {
-  const input = scanners.some(isAllocationAwareRangeScanner)
-    ? createPreparedText(value)
-    : createTextScanInput(value);
+  const input = createTextScanInput(value);
+  let prepared: PreparedText | undefined;
 
   for (const scanner of scanners) {
     if (isAllocationAwareRangeScanner(scanner)) {
-      const prepared = ensurePreparedText(input);
+      prepared ??= ensurePreparedText(input);
       let found = false;
       scanPreparedTextRanges(scanner, prepared, (match) => {
-        if (mergeCodePointRanges([match.range]).length === 0) {
+        if (snapshotRangeMatch(match) === undefined) {
           return true;
         }
 
@@ -309,6 +308,28 @@ function scanMetadataFromMatches(
   );
 
   return metadata.length === 0 ? undefined : { matches: metadata };
+}
+
+function snapshotRangeMatch(match: RangeMatch): RangeMatch | undefined {
+  const range = normalizeCodePointRange(match.range);
+  if (range === undefined) return undefined;
+
+  return {
+    range,
+    ...(match.metadata === undefined
+      ? {}
+      : { metadata: { ...match.metadata } }),
+  };
+}
+
+function normalizeCodePointRange(
+  range: TextCodePointRange,
+): TextCodePointRange | undefined {
+  const start = Math.trunc(Number(range[0]));
+  const end = Math.trunc(Number(range[1]));
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return undefined;
+  if (end <= start) return undefined;
+  return [start, end];
 }
 
 function isWhitespaceCodePoint(codePoint: string): boolean {

@@ -179,6 +179,42 @@ describe("textfilters scanner contracts", () => {
     ]);
   });
 
+  it("copies streamed match metadata before storing allocation-aware matches", () => {
+    const input = createPreparedText("abcd");
+    const metadata = { token: "first" };
+    const scanner: AllocationAwareRangeScanner = {
+      allocationAware: true,
+      check: () => true,
+      scan: (_prepared, sink) => {
+        sink({ range: [0, 1], metadata });
+        metadata.token = "second";
+        sink({ range: [2, 3], metadata });
+        metadata.token = "third";
+      },
+    };
+
+    expect(runTextRangeScanner(scanner, input).metadata).toEqual({
+      matches: [{ token: "first" }, { token: "second" }],
+    });
+  });
+
+  it("drops streamed metadata when allocation-aware ranges are rejected", () => {
+    const input = createPreparedText("abc");
+    const scanner: AllocationAwareRangeScanner = {
+      allocationAware: true,
+      check: () => true,
+      scan: (_prepared, sink) => {
+        sink({ range: [2, 2], metadata: { token: "invalid" } });
+        sink({ range: [0, 1], metadata: { token: "valid" } });
+      },
+    };
+
+    expect(runTextRangeScanner(scanner, input)).toEqual({
+      ranges: [[0, 1]],
+      metadata: { matches: [{ token: "valid" }] },
+    });
+  });
+
   it("recomputes stale or missing hints on plain scan input", () => {
     const scanner: AllocationAwareRangeScanner = {
       allocationAware: true,
@@ -359,6 +395,32 @@ describe("textfilters range scanner pipeline", () => {
 
     expect(pipeline.check("has hit")).toBe(true);
     expect(seen).toEqual(["first"]);
+  });
+
+  it("defers prepared check input until an allocation-aware scanner is reached", () => {
+    const events: string[] = [];
+    const legacy: TextRangeScanner = {
+      scan: (input) => {
+        events.push(`legacy:${"hints" in input}`);
+        return [[0, 1]];
+      },
+    };
+    const allocationAware: AllocationAwareRangeScanner = {
+      allocationAware: true,
+      check: () => {
+        events.push("allocation-aware-check");
+        return true;
+      },
+      scan: (_input, sink) => {
+        events.push("allocation-aware-scan");
+        sink({ range: [2, 3] });
+      },
+    };
+
+    const pipeline = createTextRangePipeline().use(legacy).use(allocationAware);
+
+    expect(pipeline.check("a.b")).toBe(true);
+    expect(events).toEqual(["legacy:false"]);
   });
 
   it("ignores invalid allocation-aware ranges while checking", () => {
