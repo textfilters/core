@@ -76,6 +76,18 @@ describe("textfilters scanner contracts", () => {
       hasDigit: true,
       digitCount: 2,
     });
+
+    expect(createTextHints("＠．：／＋")).toMatchObject({
+      hasAsciiOnly: false,
+      hasNonAscii: true,
+      hasPunctuation: true,
+      punctuationCount: 4,
+      hasAtSign: true,
+      hasDot: true,
+      hasColon: true,
+      hasSlash: true,
+      hasPlus: true,
+    });
   });
 
   it("normalizes scanner results and preserves metadata", () => {
@@ -111,6 +123,25 @@ describe("textfilters scanner contracts", () => {
     });
   });
 
+  it("does not compute hints for legacy scanners", () => {
+    const codePoints = new Proxy(["a", "b", "c"], {
+      get(target, property, receiver) {
+        if (property === Symbol.iterator) {
+          throw new Error("unexpected hint walk");
+        }
+
+        return Reflect.get(target, property, receiver);
+      },
+    });
+    const scanner: TextRangeScanner = {
+      scan: () => ({ ranges: [[0, 1]] }),
+    };
+
+    expect(runTextRangeScanner(scanner, { text: "abc", codePoints })).toEqual({
+      ranges: [[0, 1]],
+    });
+  });
+
   it("runs allocation-aware scanner objects through a sink", () => {
     const input = createPreparedText("abc hit");
     const scanner: AllocationAwareRangeScanner = {
@@ -125,6 +156,26 @@ describe("textfilters scanner contracts", () => {
       ranges: [[4, 7]],
       metadata: { matches: [{ kind: "word" }] },
     });
+  });
+
+  it("copies streamed ranges before storing allocation-aware matches", () => {
+    const input = createPreparedText("abcd");
+    const range = [0, 1] as [number, number];
+    const scanner: AllocationAwareRangeScanner = {
+      allocationAware: true,
+      check: () => true,
+      scan: (_prepared, sink) => {
+        sink({ range });
+        range[0] = 2;
+        range[1] = 3;
+        sink({ range });
+      },
+    };
+
+    expect(runTextRangeScanner(scanner, input).ranges).toEqual([
+      [0, 1],
+      [2, 3],
+    ]);
   });
 
   it("recomputes stale or missing hints on plain scan input", () => {

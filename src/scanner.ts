@@ -20,6 +20,7 @@ import { mergeCodePointRanges } from "./ranges.js";
 
 const UNICODE_PUNCTUATION_RE = /\p{P}/u;
 const UNICODE_DECIMAL_DIGIT_RE = /\p{Decimal_Number}/u;
+const preparedTextCache = new WeakSet<PreparedText>();
 
 export function createTextScanInput(value: unknown): TextScanInput {
   const prepared = createPreparedText(value);
@@ -32,11 +33,13 @@ export function createTextScanInput(value: unknown): TextScanInput {
 export function createPreparedText(value: unknown): PreparedText {
   const text = normalizeTextInput(value);
   const codePoints = Array.from(text);
-  return {
+  const prepared = {
     text,
     codePoints,
     hints: createTextHints(text, codePoints),
   };
+  preparedTextCache.add(prepared);
+  return prepared;
 }
 
 export function createTextHints(
@@ -73,6 +76,13 @@ export function createTextHints(
       continue;
     }
 
+    const delimiterCode = hintDelimiterCodePoint(codePoint, code);
+    hasAtSign ||= delimiterCode === 0x40;
+    hasDot ||= delimiterCode === 0x2e;
+    hasSlash ||= delimiterCode === 0x2f;
+    hasColon ||= delimiterCode === 0x3a;
+    hasPlus ||= delimiterCode === 0x2b;
+
     if (code > 0x7f) {
       hasNonAscii = true;
       if (UNICODE_PUNCTUATION_RE.test(codePoint)) {
@@ -89,12 +99,6 @@ export function createTextHints(
     if (code >= 0x21 && code <= 0x7e) {
       punctuationCount++;
     }
-
-    hasAtSign ||= code === 0x40;
-    hasDot ||= code === 0x2e;
-    hasSlash ||= code === 0x2f;
-    hasColon ||= code === 0x3a;
-    hasPlus ||= code === 0x2b;
   }
 
   return {
@@ -130,11 +134,14 @@ export function runTextRangeScanner(
   scanner: TextRangeScanner,
   input: TextScanInput,
 ): TextRangeScanResult {
-  const prepared = ensurePreparedText(input);
   if (isAllocationAwareRangeScanner(scanner)) {
+    const prepared = ensurePreparedText(input);
     const matches: RangeMatch[] = [];
     scanPreparedTextRanges(scanner, prepared, (match) => {
-      matches.push(match);
+      matches.push({
+        range: [match.range[0], match.range[1]],
+        ...(match.metadata === undefined ? {} : { metadata: match.metadata }),
+      });
     });
     return createTextRangeScanResult(
       matches.map((match) => match.range),
@@ -303,7 +310,18 @@ function isWhitespaceCodePoint(codePoint: string): boolean {
   return /\s/u.test(codePoint);
 }
 
+function hintDelimiterCodePoint(codePoint: string, code: number): number {
+  if (code <= 0x7f) return code;
+
+  const normalized = codePoint.normalize("NFKC");
+  return normalized.length === 1 ? (normalized.codePointAt(0) ?? code) : code;
+}
+
 function ensurePreparedText(input: TextScanInput): PreparedText {
+  if (preparedTextCache.has(input as PreparedText)) {
+    return input as PreparedText;
+  }
+
   const hints = (input as { readonly hints?: unknown }).hints;
   const computedHints = createTextHints(input.text, input.codePoints);
 
