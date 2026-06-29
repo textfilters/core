@@ -165,11 +165,14 @@ registered scanners. They are intentionally generic; URL, email, phone,
 profanity, spam, and future packages keep their own package-specific detection
 logic.
 
-`AllocationAwareRangeScanner` separates `check()` from sink-based `scan()`.
-`check()` returns a boolean without forcing callers to allocate match arrays.
+`AllocationAwareRangeScanner` separates a cheap pre-scan `check()` gate from
+sink-based `scan()`. A true `check()` result means the scanner is eligible to
+scan the prepared input; it is not itself proof that a range exists.
 `scan()` streams `RangeMatch` values into a `RangeMatchSink`; returning `false`
-from the sink requests early stop. Legacy scanner functions and scanner objects
-remain supported and continue to return range arrays or `TextRangeScanResult`.
+from the sink requests early stop. Use `createTextRangePipeline().check()` or
+`scanPreparedTextRanges()` when callers need to confirm an actual emitted
+range. Legacy scanner functions and scanner objects remain supported and
+continue to return range arrays or `TextRangeScanResult`.
 
 `createTextRangePipeline()` collects ranges from registered scanners, merges
 overlaps in code point order, and masks once with

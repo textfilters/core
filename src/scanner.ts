@@ -197,7 +197,9 @@ export function scanTextRanges(
   value: unknown,
   scanners: readonly TextRangeScanner[],
 ): TextRangePipelineScanResult {
-  const input = createPreparedText(value);
+  const input = scanners.some(isAllocationAwareRangeScanner)
+    ? createPreparedText(value)
+    : createTextScanInput(value);
   const scanResults = scanners.map((scanner) =>
     runTextRangeScanner(scanner, input),
   );
@@ -217,12 +219,15 @@ export function checkTextRanges(
   value: unknown,
   scanners: readonly TextRangeScanner[],
 ): boolean {
-  const input = createPreparedText(value);
+  const input = scanners.some(isAllocationAwareRangeScanner)
+    ? createPreparedText(value)
+    : createTextScanInput(value);
 
   for (const scanner of scanners) {
     if (isAllocationAwareRangeScanner(scanner)) {
+      const prepared = ensurePreparedText(input);
       let found = false;
-      scanPreparedTextRanges(scanner, input, (match) => {
+      scanPreparedTextRanges(scanner, prepared, (match) => {
         if (mergeCodePointRanges([match.range]).length === 0) {
           return true;
         }

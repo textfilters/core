@@ -420,6 +420,20 @@ describe("textfilters range scanner pipeline", () => {
     });
   });
 
+  it("uses plain scan input for legacy-only pipeline scans", () => {
+    const seenHints: boolean[] = [];
+    const scanner: TextRangeScanner = {
+      scan: (input) => {
+        seenHints.push("hints" in input);
+        return [[0, 1]];
+      },
+    };
+
+    expect(scanTextRanges("abc", [scanner]).ranges).toEqual([[0, 1]]);
+    expect(checkTextRanges("abc", [scanner])).toBe(true);
+    expect(seenHints).toEqual([false, false]);
+  });
+
   it("rejects invalid scanner registrations", () => {
     expect(() => createTextRangePipeline().use({} as TextRangeScanner)).toThrow(
       "scanner must be a function or scanner object",
