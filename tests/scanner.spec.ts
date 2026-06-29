@@ -24,6 +24,7 @@ describe("textfilters scanner contracts", () => {
       text: "",
       codePoints: [],
     });
+    expect("hints" in createTextScanInput("plain")).toBe(false);
   });
 
   it("creates prepared text with reusable generic hints", () => {

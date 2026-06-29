@@ -23,10 +23,10 @@ const UNICODE_DECIMAL_DIGIT_RE = /\p{Decimal_Number}/u;
 const preparedTextCache = new WeakSet<PreparedText>();
 
 export function createTextScanInput(value: unknown): TextScanInput {
-  const prepared = createPreparedText(value);
+  const text = normalizeTextInput(value);
   return {
-    text: prepared.text,
-    codePoints: prepared.codePoints,
+    text,
+    codePoints: Array.from(text),
   };
 }
 
