@@ -18,6 +18,8 @@ import { normalizeTextInput } from "./input.js";
 import { censorCodePointRanges } from "./masking.js";
 import { mergeCodePointRanges } from "./ranges.js";
 
+const UNICODE_PUNCTUATION_RE = /\p{P}/u;
+
 export function createTextScanInput(value: unknown): TextScanInput {
   const prepared = createPreparedText(value);
   return {
@@ -64,6 +66,9 @@ export function createTextHints(
 
     if (code > 0x7f) {
       hasNonAscii = true;
+      if (UNICODE_PUNCTUATION_RE.test(codePoint)) {
+        punctuationCount++;
+      }
       continue;
     }
 
@@ -224,6 +229,8 @@ export function scanPreparedTextRanges(
 
   let shouldContinue = true;
   const stoppingSink: RangeMatchSink = (match) => {
+    if (!shouldContinue) return false;
+
     const result = sink(match);
     shouldContinue = result !== false;
     return shouldContinue;

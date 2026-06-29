@@ -62,6 +62,13 @@ describe("textfilters scanner contracts", () => {
       hasNonAscii: true,
       hasWhitespace: true,
     });
+
+    expect(createTextHints("a\u2014b")).toMatchObject({
+      hasAsciiOnly: false,
+      hasNonAscii: true,
+      hasPunctuation: true,
+      punctuationCount: 1,
+    });
   });
 
   it("normalizes scanner results and preserves metadata", () => {
@@ -146,6 +153,29 @@ describe("textfilters scanner contracts", () => {
 
     expect(completed).toBe(false);
     expect(seen).toEqual(["first"]);
+  });
+
+  it("latches allocation-aware sink cancellation after false", () => {
+    const input = createPreparedText("one two");
+    const seen: string[] = [];
+    const scanner: AllocationAwareRangeScanner = {
+      allocationAware: true,
+      check: () => true,
+      scan: (_prepared, sink) => {
+        seen.push("first");
+        sink({ range: [0, 3] });
+        seen.push("second");
+        sink({ range: [4, 7] });
+      },
+    };
+
+    const completed = scanPreparedTextRanges(scanner, input, (match) => {
+      seen.push(`${match.range[0]}:${match.range[1]}`);
+      return false;
+    });
+
+    expect(completed).toBe(false);
+    expect(seen).toEqual(["first", "0:3", "second"]);
   });
 });
 
