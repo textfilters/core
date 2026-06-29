@@ -36,9 +36,11 @@ npm install @textfilters/core
 ```ts
 import {
   createCachedTextProcessor,
+  createPreparedText,
   createTextRangePipeline,
   createTextPipeline,
   lowerNfkc,
+  type AllocationAwareRangeScanner,
   type TextCensor,
   type TextRangeScanner,
 } from "@textfilters/core";
@@ -63,15 +65,30 @@ const scanner: TextRangeScanner = ({ text }) =>
 const rangeSafeText = createTextRangePipeline()
   .use(scanner)
   .censor("secret message");
+
+const allocationAwareScanner: AllocationAwareRangeScanner = {
+  check: (input) => input.hints.hasDot,
+  scan: (input, sink) => {
+    const index = input.codePoints.indexOf(".");
+    if (index >= 0) sink({ range: [index, index + 1] });
+  },
+};
+
+const prepared = createPreparedText("a.b");
+const hasRange = allocationAwareScanner.check(prepared);
 ```
 
 ## API
 
 - `createTextPipeline()`
 - `createTextRangePipeline()`
+- `checkTextRanges(value, scanners)`
+- `createPreparedText(value)`
+- `createTextHints(text, codePoints)`
 - `createTextScanInput(value)`
 - `createTextRangeScanResult(ranges, metadata)`
 - `runTextRangeScanner(scanner, input)`
+- `scanPreparedTextRanges(scanner, input, sink)`
 - `scanTextRanges(value, scanners)`
 - `createCachedTextProcessor(processor, options)`
 - `normalizeTextInput(value)`
@@ -139,6 +156,19 @@ delegates to `maskCodePointRangesPreservingLength()`.
 code point ranges before masking. A scanner can be a function or an object with
 a `scan()` method. Scanners receive `TextScanInput`, which contains the
 normalized source text and its code point array.
+
+`PreparedText` extends that input with reusable `TextHints`, including generic
+length, ASCII, digit, whitespace, punctuation, and common delimiter facts.
+These hints are computed once by `createPreparedText()` and reused across
+registered scanners. They are intentionally generic; URL, email, phone,
+profanity, spam, and future packages keep their own package-specific detection
+logic.
+
+`AllocationAwareRangeScanner` separates `check()` from sink-based `scan()`.
+`check()` returns a boolean without forcing callers to allocate match arrays.
+`scan()` streams `RangeMatch` values into a `RangeMatchSink`; returning `false`
+from the sink requests early stop. Legacy scanner functions and scanner objects
+remain supported and continue to return range arrays or `TextRangeScanResult`.
 
 `createTextRangePipeline()` collects ranges from registered scanners, merges
 overlaps in code point order, and masks once with

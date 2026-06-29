@@ -5,7 +5,10 @@ describe("textfilters core public entrypoint", () => {
   it("keeps the runtime export surface stable", () => {
     expect(Object.keys(core).sort()).toEqual([
       "censorCodePointRanges",
+      "checkTextRanges",
       "createCachedTextProcessor",
+      "createPreparedText",
+      "createTextHints",
       "createTextPipeline",
       "createTextRangePipeline",
       "createTextRangeScanResult",
@@ -22,6 +25,7 @@ describe("textfilters core public entrypoint", () => {
       "normalizeTextInput",
       "normalizeVisibleMaskChar",
       "runTextRangeScanner",
+      "scanPreparedTextRanges",
       "scanTextRanges",
       "stripZeroWidth",
       "toCodePoints",

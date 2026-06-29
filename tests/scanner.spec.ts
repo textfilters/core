@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  checkTextRanges,
+  createPreparedText,
+  createTextHints,
   createTextRangePipeline,
   createTextRangeScanResult,
   createTextScanInput,
   runTextRangeScanner,
+  scanPreparedTextRanges,
   scanTextRanges,
+  type AllocationAwareRangeScanner,
   type TextRangeScanner,
   type TextScanInput,
 } from "../src/index.js";
@@ -18,6 +23,38 @@ describe("textfilters scanner contracts", () => {
     expect(createTextScanInput(null)).toEqual({
       text: "",
       codePoints: [],
+    });
+  });
+
+  it("creates prepared text with reusable generic hints", () => {
+    expect(createPreparedText("A+9@example.com/path:tail.")).toEqual({
+      text: "A+9@example.com/path:tail.",
+      codePoints: Array.from("A+9@example.com/path:tail."),
+      hints: {
+        textLength: 26,
+        codePointLength: 26,
+        isEmpty: false,
+        hasAsciiOnly: true,
+        hasNonAscii: false,
+        hasDigit: true,
+        digitCount: 1,
+        hasAsciiLetter: true,
+        hasWhitespace: false,
+        hasPunctuation: true,
+        punctuationCount: 6,
+        hasAtSign: true,
+        hasDot: true,
+        hasSlash: true,
+        hasColon: true,
+        hasPlus: true,
+      },
+    });
+
+    expect(createTextHints("a😀")).toMatchObject({
+      textLength: 3,
+      codePointLength: 2,
+      hasAsciiOnly: false,
+      hasNonAscii: true,
     });
   });
 
@@ -52,6 +89,39 @@ describe("textfilters scanner contracts", () => {
       ranges: [[2, 3]],
       metadata: { source: "object" },
     });
+  });
+
+  it("runs allocation-aware scanner objects through a sink", () => {
+    const input = createPreparedText("abc hit");
+    const scanner: AllocationAwareRangeScanner = {
+      check: (prepared) => prepared.hints.hasWhitespace,
+      scan: (_prepared, sink) => {
+        sink({ range: [4, 7] });
+      },
+    };
+
+    expect(runTextRangeScanner(scanner, input)).toEqual({
+      ranges: [[4, 7]],
+    });
+  });
+
+  it("stops allocation-aware scanning when the sink returns false", () => {
+    const input = createPreparedText("one two");
+    const seen: string[] = [];
+    const scanner: AllocationAwareRangeScanner = {
+      check: () => true,
+      scan: (_prepared, sink) => {
+        seen.push("first");
+        if (sink({ range: [0, 3] }) === false) return false;
+        seen.push("second");
+        sink({ range: [4, 7] });
+      },
+    };
+
+    const completed = scanPreparedTextRanges(scanner, input, () => false);
+
+    expect(completed).toBe(false);
+    expect(seen).toEqual(["first"]);
   });
 });
 
@@ -104,6 +174,7 @@ describe("textfilters range scanner pipeline", () => {
   it("keeps clean text unchanged when scanners return no ranges", () => {
     const pipeline = createTextRangePipeline().use(() => []);
 
+    expect(pipeline.check("clean")).toBe(false);
     expect(pipeline.censor("clean")).toBe("clean");
     expect(pipeline.scan("clean")).toMatchObject({
       text: "clean",
@@ -111,6 +182,49 @@ describe("textfilters range scanner pipeline", () => {
       ranges: [],
       scanResults: [{ ranges: [] }],
     });
+  });
+
+  it("checks allocation-aware scanners without collecting matches", () => {
+    const events: string[] = [];
+    const scanner: AllocationAwareRangeScanner = {
+      check: (input) => {
+        events.push(`check:${input.hints.hasDot}`);
+        return input.hints.hasDot;
+      },
+      scan: () => {
+        events.push("scan");
+      },
+    };
+
+    const pipeline = createTextRangePipeline().use(scanner);
+
+    expect(pipeline.check("plain")).toBe(false);
+    expect(pipeline.check("has.dot")).toBe(true);
+    expect(events).toEqual(["check:false", "check:true"]);
+  });
+
+  it("reuses prepared text hints across registered scanners", () => {
+    const seenHints: unknown[] = [];
+    const first: AllocationAwareRangeScanner = {
+      check: (input) => input.hints.hasDot,
+      scan: (input, sink) => {
+        seenHints.push(input.hints);
+        sink({ range: [0, 1] });
+      },
+    };
+    const second: AllocationAwareRangeScanner = {
+      check: (input) => input.hints.hasDot,
+      scan: (input, sink) => {
+        seenHints.push(input.hints);
+        sink({ range: [2, 3] });
+      },
+    };
+
+    expect(scanTextRanges("a.b", [first, second]).ranges).toEqual([
+      [0, 1],
+      [2, 3],
+    ]);
+    expect(seenHints[0]).toBe(seenHints[1]);
   });
 
   it("collects ranges from scanner functions without constructing a pipeline", () => {

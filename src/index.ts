@@ -1,6 +1,11 @@
 export type {
+  AllocationAwareRangeScanner,
   CachedTextProcessor,
   CachedTextProcessorOptions,
+  LegacyTextRangeScanner,
+  PreparedText,
+  RangeMatch,
+  RangeMatchSink,
   TextCensor,
   TextCodePointRange,
   TextGuard,
@@ -13,6 +18,7 @@ export type {
   TextPipelineProcessedResult,
   TextPipelineProcessResult,
   TextRange,
+  TextHints,
   TextRangePipeline,
   TextRangePipelineCensorResult,
   TextRangePipelineScanResult,
@@ -43,9 +49,13 @@ export {
 export { createTextPipeline } from "./pipeline.js";
 export { mergeCodePointRanges, mergeRanges } from "./ranges.js";
 export {
+  checkTextRanges,
+  createPreparedText,
+  createTextHints,
   createTextRangePipeline,
   createTextRangeScanResult,
   createTextScanInput,
   runTextRangeScanner,
+  scanPreparedTextRanges,
   scanTextRanges,
 } from "./scanner.js";

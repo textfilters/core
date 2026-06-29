@@ -61,12 +61,42 @@ export interface TextPipeline {
 export type TextRange = readonly [start: number, end: number];
 export type TextCodePointRange = readonly [start: number, end: number];
 
+export interface TextHints {
+  readonly textLength: number;
+  readonly codePointLength: number;
+  readonly isEmpty: boolean;
+  readonly hasAsciiOnly: boolean;
+  readonly hasNonAscii: boolean;
+  readonly hasDigit: boolean;
+  readonly digitCount: number;
+  readonly hasAsciiLetter: boolean;
+  readonly hasWhitespace: boolean;
+  readonly hasPunctuation: boolean;
+  readonly punctuationCount: number;
+  readonly hasAtSign: boolean;
+  readonly hasDot: boolean;
+  readonly hasSlash: boolean;
+  readonly hasColon: boolean;
+  readonly hasPlus: boolean;
+}
+
 export interface TextScanInput {
   readonly text: string;
   readonly codePoints: readonly string[];
 }
 
+export interface PreparedText extends TextScanInput {
+  readonly hints: TextHints;
+}
+
 export type TextRangeScanMetadata = Readonly<Record<string, unknown>>;
+
+export interface RangeMatch {
+  readonly range: TextCodePointRange;
+  readonly metadata?: TextRangeScanMetadata;
+}
+
+export type RangeMatchSink = (match: RangeMatch) => boolean | void;
 
 export interface TextRangeScanResult {
   readonly ranges: readonly TextCodePointRange[];
@@ -81,12 +111,21 @@ export type TextRangeScannerFunction = (
   input: TextScanInput,
 ) => TextRangeScannerOutput;
 
+export interface AllocationAwareRangeScanner {
+  readonly name?: string;
+  check(input: PreparedText): boolean;
+  scan(input: PreparedText, sink: RangeMatchSink): boolean | void;
+}
+
+export interface LegacyTextRangeScanner {
+  readonly name?: string;
+  scan(input: TextScanInput): TextRangeScannerOutput;
+}
+
 export type TextRangeScanner =
   | TextRangeScannerFunction
-  | {
-      readonly name?: string;
-      scan(input: TextScanInput): TextRangeScannerOutput;
-    };
+  | LegacyTextRangeScanner
+  | AllocationAwareRangeScanner;
 
 export interface TextRangePipelineScanResult {
   readonly text: string;
@@ -103,6 +142,7 @@ export interface TextRangePipelineCensorResult {
 
 export interface TextRangePipeline {
   use(scanner: TextRangeScanner): TextRangePipeline;
+  check(value: unknown): boolean;
   scan(value: unknown): TextRangePipelineScanResult;
   censor(value: unknown, mask?: string): string;
   process(value: unknown, mask?: string): TextRangePipelineCensorResult;
