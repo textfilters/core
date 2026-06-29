@@ -254,8 +254,27 @@ describe("textfilters range scanner pipeline", () => {
     const pipeline = createTextRangePipeline().use(scanner);
 
     expect(pipeline.check("plain")).toBe(false);
-    expect(pipeline.check("has.dot")).toBe(true);
-    expect(events).toEqual(["check:false", "check:true"]);
+    expect(pipeline.check("has.dot")).toBe(false);
+    expect(events).toEqual(["check:false", "check:true", "scan"]);
+  });
+
+  it("checks allocation-aware scanners by stopping after the first emitted range", () => {
+    const seen: string[] = [];
+    const scanner: AllocationAwareRangeScanner = {
+      allocationAware: true,
+      check: () => true,
+      scan: (_input, sink) => {
+        seen.push("first");
+        if (sink({ range: [0, 3] }) === false) return false;
+        seen.push("second");
+        sink({ range: [4, 7] });
+      },
+    };
+
+    const pipeline = createTextRangePipeline().use(scanner);
+
+    expect(pipeline.check("has hit")).toBe(true);
+    expect(seen).toEqual(["first"]);
   });
 
   it("reuses prepared text hints across registered scanners", () => {

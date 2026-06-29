@@ -210,7 +210,12 @@ export function checkTextRanges(
 
   for (const scanner of scanners) {
     if (isAllocationAwareRangeScanner(scanner)) {
-      if (scanner.check(input)) return true;
+      let found = false;
+      scanPreparedTextRanges(scanner, input, () => {
+        found = true;
+        return false;
+      });
+      if (found) return true;
       continue;
     }
 
