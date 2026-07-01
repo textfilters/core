@@ -41,6 +41,7 @@ import {
   createTextPipeline,
   lowerNfkc,
   type AllocationAwareRangeScanner,
+  type ScanInput,
   type TextCensor,
   type TextRangeScanner,
 } from "@textfilters/core";
@@ -77,6 +78,7 @@ const allocationAwareScanner: AllocationAwareRangeScanner = {
 
 const prepared = createPreparedText("a.b");
 const hasRange = allocationAwareScanner.check(prepared);
+const sharedInput: ScanInput = prepared;
 ```
 
 ## API
@@ -106,6 +108,10 @@ const hasRange = allocationAwareScanner.check(prepared);
 - `maskCodePointRanges(codePoints, ranges, maskChar)`
 - `maskCodePointRangesPreservingLength(codePoints, ranges, maskChar)`
 - `censorCodePointRanges(codePoints, ranges, maskChar)`
+- `ScanInput`
+- `ScanHints`
+- `ScanResult`
+- `TextRange`
 
 ### Public Input Normalization
 
@@ -164,6 +170,11 @@ These hints are computed once by `createPreparedText()` and reused across
 registered scanners. They are intentionally generic; URL, email, phone,
 profanity, spam, and future packages keep their own package-specific detection
 logic.
+
+`ScanInput`, `ScanHints`, and `ScanResult` are short shared aliases for the
+allocation-aware prepared input, reusable text hints, and pipeline scan result
+shape. The longer `PreparedText`, `TextHints`, and
+`TextRangePipelineScanResult` names remain supported for existing callers.
 
 `AllocationAwareRangeScanner` separates a cheap pre-scan `check()` gate from
 sink-based `scan()`. A true `check()` result means the scanner is eligible to

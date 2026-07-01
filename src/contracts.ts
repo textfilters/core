@@ -135,6 +135,10 @@ export interface TextRangePipelineScanResult {
   readonly scanResults: readonly TextRangeScanResult[];
 }
 
+export type ScanHints = TextHints;
+export type ScanInput = PreparedText;
+export type ScanResult = TextRangePipelineScanResult;
+
 export interface TextRangePipelineCensorResult {
   readonly text: string;
   readonly ranges: readonly TextCodePointRange[];
