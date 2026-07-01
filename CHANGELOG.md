@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/textfilters/core/compare/v0.3.2...v0.4.0) (2026-07-01)
+
+
+### Features
+
+* add shared scanner contract aliases ([9e8a8bf](https://github.com/textfilters/core/commit/9e8a8bff18f4ca9e53c407d3dd4921beca996d1b))
+
 ## [0.3.2](https://github.com/textfilters/core/compare/v0.3.1...v0.3.2) (2026-06-30)
 
 
